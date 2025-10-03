@@ -1,0 +1,81 @@
+/**
+ * @description This ruleset enforces a strict user-ownership model, ensuring that only authenticated users can access their own data. Anonymous users are supported, with data stored under their generated user ID.
+ * @dataStructure Data is organized hierarchically under `/users/{userId}`. Each user has a profile document and a subcollection of items.
+ * @keySecurityDecisions User listing is disallowed for privacy. All write operations are restricted to the authenticated user, preventing unauthorized data modification.
+ * @denormalizationForAuthorization User documents and their items denormalize the userId to make the rules simpler to create and more performant
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Controls access to user profile documents. Only the authenticated user can read or write their own profile.
+     * @path /users/{userId}
+     * @allow (create) User 'c0BOIdPL15MJkX0NItoYaG56WW23' can create their profile if request.auth.uid == userId.
+     * @allow (get) User 'c0BOIdPL15MJkX0NItoYaG56WW23' can read their profile if request.auth.uid == userId.
+     * @allow (update) User 'c0BOIdPL15MJkX0NItoYaG56WW23' can update their profile if request.auth.uid == userId.
+     * @allow (delete) User 'c0BOIdPL15MJkX0NItoYaG56WW23' can delete their profile if request.auth.uid == userId.
+     * @deny (create) User 'attackerId' cannot create user 'c0BOIdPL15MJkX0NItoYaG56WW23's profile.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId} {
+      // Allow a user to create their own profile.
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.createdAt == request.time
+;
+
+      // Allow a user to get their own profile.
+      allow get: if isSignedIn() && isOwner(userId);
+
+      // Allow a user to update their own profile.
+      allow update: if isSignedIn() && isExistingOwner(userId) ;
+
+      // Allow a user to delete their own profile.
+      allow delete: if isSignedIn() && isExistingOwner(userId);
+
+      // Prevent listing of all users.
+      allow list: if false;
+    }
+
+    /**
+     * @description Controls access to items (summaries, rewrites, etc.) within a user's subcollection. Only the owning user can create, read, update, or delete items in their own collection.
+     * @path /users/{userId}/items/{itemId}
+     * @allow (create) User 'c0BOIdPL15MJkX0NItoYaG56WW23' can create an item in their collection if request.auth.uid == userId.
+     * @allow (get) User 'c0BOIdPL15MJkX0NItoYaG56WW23' can read an item in their collection if request.auth.uid == userId.
+     * @allow (update) User 'c0BOIdPL15MJkX0NItoYaG56WW23' can update an item in their collection if request.auth.uid == userId.
+     * @allow (delete) User 'c0BOIdPL15MJkX0NItoYaG56WW23' can delete an item in their collection if request.auth.uid == userId.
+     * @deny (create) User 'attackerId' cannot create an item in user 'c0BOIdPL15MJkX0NItoYaG56WW23's collection.
+     * @principle Enforces document ownership for all item operations.
+     */
+    match /users/{userId}/items/{itemId} {
+      // Allow a user to create an item in their own collection.
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
+
+      // Allow a user to get an item in their own collection.
+      allow get: if isSignedIn() && isOwner(userId);
+
+      // Allow a user to update an item in their own collection.
+      allow update: if isSignedIn() && isExistingOwner(userId) && resource.data.userId == userId;
+
+      // Allow a user to delete an item in their own collection.
+      allow delete: if isSignedIn() && isExistingOwner(userId);
+
+      // Allow the owner to list their own items.
+      allow list: if isSignedIn() && isOwner(userId);
+    }
+  }
+
+  // Helper function to determine if the user is signed in.
+  function isSignedIn() {
+    return request.auth != null;
+  }
+
+  // Helper function to determine if the requesting user is the owner of the document.
+  function isOwner(userId) {
+    return request.auth.uid == userId;
+  }
+
+  // Helper function to determine if the requesting user is the owner of an existing document.
+  function isExistingOwner(userId) {
+    return isOwner(userId) && resource != null;
+  }
+}

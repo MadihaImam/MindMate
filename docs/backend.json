@@ -1,0 +1,137 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the MindMate application.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The user's full name. Provided at signup."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address. Handled by Firebase Auth, stored for reference.",
+          "format": "email"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user account was created.",
+          "format": "date-time"
+        },
+        "plan": {
+          "type": "string",
+          "description": "The user's subscription plan.",
+          "enum": [
+            "free",
+            "professional",
+            "enterprise"
+          ]
+        }
+      },
+      "required": [
+        "createdAt",
+        "plan"
+      ]
+    },
+    "Item": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Item",
+      "type": "object",
+      "description": "Represents a saved item (summary, rewrite, etc.) in the MindMate application.",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who owns this item. This is used for security rules."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the saved item."
+        },
+        "content": {
+          "type": "string",
+          "description": "The content of the saved item (e.g., the summarized text)."
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of the saved item (e.g., 'summary', 'rewrite')."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the item was created.",
+          "format": "date-time"
+        },
+        "favorite": {
+          "type": "boolean",
+          "description": "Indicates whether the item is a favorite."
+        }
+      },
+      "required": [
+        "userId",
+        "title",
+        "content",
+        "type",
+        "createdAt",
+        "favorite"
+      ]
+    },
+    "Feedback": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Feedback",
+      "type": "object",
+      "description": "Represents a feedback submission from a user.",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who submitted the feedback."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email of the user who submitted the feedback."
+        },
+        "feedback": {
+          "type": "string",
+          "description": "The content of the feedback message."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the feedback was submitted.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "userId",
+        "email",
+        "feedback",
+        "createdAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/User"
+      },
+      "description": "Stores public profiles for all users."
+    },
+    "/users/{userId}/items/{itemId}": {
+      "schema": {
+        "$ref": "#/entities/Item"
+      },
+      "description": "Stores items created by a specific user."
+    },
+    "/feedback/{feedbackId}": {
+      "schema": {
+        "$ref": "#/entities/Feedback"
+      },
+      "description": "Stores feedback submissions from all users."
+    }
+  }
+}
