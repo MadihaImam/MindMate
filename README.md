@@ -1,5 +1,5 @@
-# Firebase Studio
+# Malioh Studio
 
-This is a NextJS starter in Firebase Studio.
+This is a NextJS starter in Malioh Studio.
 
 To get started, take a look at src/app/page.tsx.
