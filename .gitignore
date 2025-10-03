@@ -47,3 +47,19 @@ firestore-debug.log
 *.log
 build/
 dist/
+# dependencies
+node_modules/
+
+# production
+build/
+dist/
+out/
+
+# next.js
+.next/
+
+# environment
+.env
+
+# logs
+*.log
